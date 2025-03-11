@@ -23,8 +23,8 @@ interface CompromiseDoc {
 
 // Register the dates plugin with configuration
 nlp.plugin(compromiseDates);
-nlp.extend((Doc: any, world: any) => {
-    world.addWords({
+nlp.extend(() => ({
+    words: {
         // Month names and abbreviations
         jan: 'Month',
         january: 'Month',
@@ -57,8 +57,8 @@ nlp.extend((Doc: any, world: any) => {
         tm: 'Date',
         yesterday: 'Date',
         y: 'Date',
-    });
-});
+    },
+}));
 
 // Add custom words to compromise
 nlp.addWords({
@@ -437,12 +437,12 @@ export default function TransactionInput({ onSubmit, onCancel }: Props) {
     };
 
     const handleInputChange = (e: React.FormEvent<HTMLDivElement>) => {
-        const newInput = e.currentTarget.textContent || '';
-        setInput(newInput);
-
-        const words = newInput.split(/\s+/);
+        const text = e.currentTarget.textContent || '';
+        setInput(text);
+        const parsed = parseInput(text);
+        setParsedPreview(parsed);
+        const words = text.split(/\s+/);
         const lastWord = words[words.length - 1];
-
         const newSuggestion = findSuggestion(lastWord);
         setSuggestion(newSuggestion);
     };
@@ -458,95 +458,17 @@ export default function TransactionInput({ onSubmit, onCancel }: Props) {
             handleSubmit();
         } else if (e.key === 'Tab' && suggestion) {
             e.preventDefault();
-
-            // Split input into words
-            const words = input.split(/\s+/);
-            const completedText = suggestion.text;
-
-            // Replace the last word with the completed text
-            words[words.length - 1] = completedText;
-            const newInput = words.join(' ');
-
-            // Update corresponding dropdown based on suggestion type
-            if (suggestion.type === 'merchant') {
-                setSelectedMerchant(completedText);
-            } else if (suggestion.type === 'category') {
-                setSelectedCategory(completedText);
-            } else if (suggestion.type === 'date') {
-                // Handle relative dates
-                const relativeDates: Record<string, Date> = {
-                    t: new Date(),
-                    today: new Date(),
-                    tm: new Date(Date.now() + 86400000),
-                    tomorrow: new Date(Date.now() + 86400000),
-                    y: new Date(Date.now() - 86400000),
-                    yesterday: new Date(Date.now() - 86400000),
-                };
-
-                const relativeDate = relativeDates[completedText.toLowerCase()];
-                if (relativeDate) {
-                    setSelectedDate(relativeDate.toISOString().split('T')[0]);
-                } else {
-                    // Try manual date parsing for month + day format
-                    const monthMatch = completedText.match(
-                        /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*(\d{1,2})$/i
-                    );
-                    if (monthMatch) {
-                        const [_, month, day] = monthMatch;
-                        const monthNames = [
-                            'jan',
-                            'feb',
-                            'mar',
-                            'apr',
-                            'may',
-                            'jun',
-                            'jul',
-                            'aug',
-                            'sep',
-                            'oct',
-                            'nov',
-                            'dec',
-                        ];
-                        const monthIndex = monthNames.findIndex((m) =>
-                            month.toLowerCase().startsWith(m)
-                        );
-                        if (monthIndex !== -1) {
-                            const date = new Date();
-                            date.setMonth(monthIndex);
-                            date.setDate(parseInt(day));
-                            // If the date is in the past, assume next year
-                            if (date < new Date()) {
-                                date.setFullYear(date.getFullYear() + 1);
-                            }
-                            setSelectedDate(date.toISOString().split('T')[0]);
-                        }
-                    } else {
-                        // Try compromise date parsing as fallback
-                        const doc = nlp(completedText) as CompromiseDoc;
-                        const dates = doc.dates();
-                        if (dates.found) {
-                            const date = new Date(dates.get()[0].start);
-                            setSelectedDate(date.toISOString().split('T')[0]);
-                        }
-                    }
-                }
+            const cursorPosition = window
+                .getSelection()
+                ?.getRangeAt(0).startOffset;
+            if (cursorPosition !== undefined) {
+                setInput((prev) => {
+                    const words = prev.split(/\s+/);
+                    words[words.length - 1] = suggestion.text;
+                    return words.join(' ') + ' ';
+                });
+                setSuggestion(null);
             }
-
-            // Update the contenteditable div
-            if (inputRef.current) {
-                inputRef.current.textContent = newInput + ' ';
-
-                // Set cursor at the end
-                const range = document.createRange();
-                const sel = window.getSelection();
-                range.selectNodeContents(inputRef.current);
-                range.collapse(false);
-                sel?.removeAllRanges();
-                sel?.addRange(range);
-            }
-
-            setInput(newInput + ' ');
-            setSuggestion(null);
         }
     };
 
@@ -586,9 +508,10 @@ export default function TransactionInput({ onSubmit, onCancel }: Props) {
     }, [input]);
 
     useEffect(() => {
-        const parsed = parseInput(input);
+        const text = input;
+        const parsed = parseInput(text);
         setParsedPreview(parsed);
-    }, [input, selectedWallet, selectedCategory, selectedDate]);
+    }, [input, parseInput]);
 
     const handleSubmit = () => {
         if (parsedPreview) {
@@ -670,7 +593,6 @@ export default function TransactionInput({ onSubmit, onCancel }: Props) {
                 onCancel();
             }
         };
-
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
     }, [onCancel]);

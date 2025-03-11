@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Spend - Personal Finance Tracker
 
-## Getting Started
+A modern personal finance tracker built with Next.js, React, and Zustand. Track your spending, monitor your budget, and get insights into your financial health.
 
-First, run the development server:
+## Features
+
+-   💰 Track transactions across multiple wallets
+-   📊 Visual reports and analytics
+-   💼 Budget planning and monitoring
+-   🏦 Support for different account types (cash, credit cards, digital wallets)
+-   📱 Responsive design for all devices
+
+## Tech Stack
+
+-   [Next.js 15](https://nextjs.org/) - React framework
+-   [React 19](https://react.dev/) - UI library
+-   [Zustand](https://github.com/pmndrs/zustand) - State management
+-   [Recharts](https://recharts.org/) - Charting library
+-   [Tailwind CSS](https://tailwindcss.com/) - Styling
+-   [TypeScript](https://www.typescriptlang.org/) - Type safety
+
+## Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+This project is optimized for deployment on [Vercel](https://vercel.com). To deploy:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Push your code to a GitHub repository
+2. Visit [Vercel](https://vercel.com)
+3. Click "Import Project"
+4. Select your repository
+5. Deploy!
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+No environment variables are required for basic functionality.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

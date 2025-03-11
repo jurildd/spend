@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import nlp from 'compromise';
 import compromiseDates from 'compromise-dates';
 import { Transaction } from '@/store';
@@ -23,6 +23,7 @@ interface CompromiseDoc {
 
 // Register the dates plugin with configuration
 nlp.plugin(compromiseDates);
+// @ts-expect-error - compromise plugin type definition issue
 nlp.extend(() => ({
     words: {
         // Month names and abbreviations
@@ -211,56 +212,59 @@ export default function TransactionInput({ onSubmit, onCancel }: Props) {
     const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
     const inputRef = useRef<HTMLDivElement>(null);
 
-    const parseInput = (text: string): ParsedTransaction | null => {
-        const doc = nlp(text) as CompromiseDoc;
+    const parseInput = useCallback(
+        (text: string): ParsedTransaction | null => {
+            const doc = nlp(text) as CompromiseDoc;
 
-        // Parse amount
-        let amount: number | null = null;
-        const isInflow = text.trim().startsWith('+');
-        const money = doc.match('#Money+ #Currency?');
-        if (money.found) {
-            const value = money
-                .text()
-                .toLowerCase()
-                .replace(/[₱p$+]/g, '')
-                .replace(/k/g, '000');
-            amount = parseFloat(value);
-            // Default to outflow (negative) unless explicitly marked as inflow
-            if (!isInflow) {
-                amount = -amount;
-            }
-        } else {
-            const numbers = doc.numbers();
-            if (numbers.found) {
-                const num = numbers.get()[0];
-                amount = typeof num === 'number' ? num : null;
+            // Parse amount
+            let amount: number | null = null;
+            const isInflow = text.trim().startsWith('+');
+            const money = doc.match('#Money+ #Currency?');
+            if (money.found) {
+                const value = money
+                    .text()
+                    .toLowerCase()
+                    .replace(/[₱p$+]/g, '')
+                    .replace(/k/g, '000');
+                amount = parseFloat(value);
                 // Default to outflow (negative) unless explicitly marked as inflow
-                if (amount !== null && !isInflow) {
+                if (!isInflow) {
                     amount = -amount;
                 }
+            } else {
+                const numbers = doc.numbers();
+                if (numbers.found) {
+                    const num = numbers.get()[0];
+                    amount = typeof num === 'number' ? num : null;
+                    // Default to outflow (negative) unless explicitly marked as inflow
+                    if (amount !== null && !isInflow) {
+                        amount = -amount;
+                    }
+                }
             }
-        }
-        if (!amount) return null;
+            if (!amount) return null;
 
-        // Parse date
-        const dates = doc.dates();
-        const date = dates.found
-            ? new Date(dates.get()[0].start).toISOString().split('T')[0]
-            : selectedDate;
+            // Parse date
+            const dates = doc.dates();
+            const date = dates.found
+                ? new Date(dates.get()[0].start).toISOString().split('T')[0]
+                : selectedDate;
 
-        // Parse merchant and category
-        const merchant = selectedMerchant || '';
-        const category = selectedCategory || '';
+            // Parse merchant and category
+            const merchant = selectedMerchant || '';
+            const category = selectedCategory || '';
 
-        return {
-            amount,
-            merchant,
-            category,
-            date,
-            wallet: selectedWallet.name,
-            walletType: selectedWallet.type,
-        };
-    };
+            return {
+                amount,
+                merchant,
+                category,
+                date,
+                wallet: selectedWallet.name,
+                walletType: selectedWallet.type,
+            };
+        },
+        [selectedDate, selectedMerchant, selectedCategory, selectedWallet]
+    );
 
     const getSuggestionIcon = (type: Suggestion['type']): React.ReactNode => {
         switch (type) {
@@ -406,7 +410,7 @@ export default function TransactionInput({ onSubmit, onCancel }: Props) {
             /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*(\d{1,2})$/i
         );
         if (monthMatch) {
-            const [_, month, day] = monthMatch;
+            const [, month, day] = monthMatch;
             return {
                 text: `${month} ${day}`,
                 type: 'date',

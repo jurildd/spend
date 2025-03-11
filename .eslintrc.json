@@ -6,6 +6,7 @@
             "warn",
             { "argsIgnorePattern": "^_" }
         ],
-        "react-hooks/exhaustive-deps": "warn"
+        "react-hooks/exhaustive-deps": "warn",
+        "@typescript-eslint/ban-ts-comment": "off"
     }
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import TransactionList from '@/components/TransactionList';
 
-export default function Home() {
+function HomeContent() {
     const searchParams = useSearchParams();
     const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
 
@@ -27,5 +27,32 @@ export default function Home() {
                 <TransactionList selectedWallet={selectedWallet} />
             </div>
         </div>
+    );
+}
+
+export default function Home() {
+    return (
+        <Suspense
+            fallback={
+                <div className='flex w-full'>
+                    <div className='w-[280px] h-screen bg-[#F1F1F6]' />
+                    <div className='flex-1 p-8'>
+                        <div className='animate-pulse'>
+                            <div className='h-8 w-48 bg-gray-200 rounded mb-8' />
+                            <div className='space-y-4'>
+                                {[...Array(5)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className='h-16 bg-gray-200 rounded'
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        >
+            <HomeContent />
+        </Suspense>
     );
 }
